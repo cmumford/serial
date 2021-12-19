@@ -446,7 +446,7 @@ document.
 
   <ol>
     <li>Let |info:SerialPortInfo| be a [=new=] {{SerialPortInfo}} dictionary.
-    <li>If the port is part of a USB device, perform the following steps:
+    <li>If the port is port of a USB device, perform the following steps:
       <ol>
         <li>
           Set |info|["{{SerialPortInfo/usbVendorId}}"] to the vendor ID of the
@@ -455,6 +455,12 @@ document.
           Set |info|["{{SerialPortInfo/usbProductId}}"] to the product ID of the
           device.
       </ol>
+      <li>If the port is port of a Bluetooth device, perform the following steps:
+        <ol>
+          <li>
+            Set |info|["{{SerialPortInfo/bluetoothServiceClassId}}"] to the
+            Bluetooth service class ID of the device.
+        </ol>
     <li>Return |info|.
   </ol>
 
@@ -465,6 +471,7 @@ document.
       dictionary SerialPortInfo {
         unsigned short usbVendorId;
         unsigned short usbProductId;
+        DOMString bluetoothServiceClassId;
       };
     </pre>
 
@@ -477,6 +484,11 @@ document.
       <dd>
         If the port is part of a USB device this member will be the 16-bit product
         ID of that device. Otherwise it will be `undefined`.
+      <dt><dfn>bluetoothServiceClassId</dfn> member
+        <dd>
+          If the port is part of a Bluetooth device this member will be the
+          canonical UUID service class ID of that device. Otherwise it will be
+          `undefined`.
     </dl>
   </section>
 
