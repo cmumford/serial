@@ -74,11 +74,11 @@ document.
       any serial devices. A site must first call {{Serial/requestPort()}}. This
       call gives the browser the opportunity to prompt the user for which device
       the site should be allowed to control. If the site is designed to work
-      with a particular device which is always connected via USB the site can
-      provide a filter restricting the devices the user can select to only those
-      that would be compatible. For example, a site which programs
-      Arduino-powered robots could specify a like the following to limit the set
-      of selectable ports to only USB devices with Arduino's USB vendor ID,
+      with a particular device which is always connected via USB or Bluetooth the
+      site can provide a filter restricting the devices the user can select to
+      only those that would be compatible. For example, a site which programs
+      Arduino-powered robots could specify a filter like the following to limit
+      the set of selectable ports to only USB devices with Arduino's USB vendor ID,
 
       <pre class="js">
         const filter = { usbVendorId: 0x2341 };
@@ -88,7 +88,7 @@ document.
       If on the other hand the site expects to be used with a wide variety of
       devices or devices connected through a USB to serial converter it may
       specify no filter at all and rely on the user to select the appropriate
-      device,
+      USB device,
 
       <pre class="js">
         const port = await navigator.serial.requestPort();
@@ -139,7 +139,8 @@ document.
         steps:
         <ol>
           <li>
-            If |filter|["{{SerialPortFilter/usbVendorId}}"] is not present,
+            If |filter|["{{SerialPortFilter/bluetoothServiceClassId}}"] and
+            |filter|["{{SerialPortFilter/usbVendorId}}"] is not present,
             [=reject=] |promise| with a {{TypeError}} and return |promise|.
 
             <div class="note">
@@ -148,6 +149,17 @@ document.
               {{SerialPortFilter/usbProductId}} is specified then
               {{SerialPortFilter/usbVendorId}} must also be specified.
             </div>
+
+            <li>
+              If |filter|["{{SerialPortFilter/bluetoothServiceClassId}}"] and
+              |filter|["{{SerialPortFilter/usbVendorId}}"] is present,
+              [=reject=] |promise| with a {{TypeError}} and return |promise|.
+
+              <div class="note">
+                This check implements the combined rule that a
+                {{SerialPortFilter}} may only select a USB or Bluetooth
+                device.
+              </div>
         </ol>
       <li>Run the following steps [=in parallel=]:
         <ol>
@@ -155,7 +167,8 @@ document.
             Prompt the user to grant the site access to a serial port by
             presenting them with a list of available ports that [=match any
             filter=] in |options|["{{SerialPortRequestOptions/filters}}"] if
-            present and all available ports otherwise.
+            present and all available traditional serial ports otherwise.
+            Bluetooth ports are omitted unless explicitly matched by a filter.
           <li>
             If the user does not choose a port, [=queue a global task=] on the
             [=relevant global object=] of [=this=] using the [=serial port task
@@ -194,6 +207,7 @@ document.
         dictionary SerialPortFilter {
           unsigned short usbVendorId;
           unsigned short usbProductId;
+          string bluetoothServiceClassId;
         };
       </pre>
 
@@ -202,6 +216,8 @@ document.
         <dd>USB Vendor ID
         <dt><dfn>usbProductId</dfn> member
         <dd>USB Product ID
+        <dt><dfn>bluetoothServiceClassId</dfn> member
+        <dd>Bluetooth Service Class ID
       </dl>
 
       <p>
@@ -209,6 +225,12 @@ document.
       |filter:SerialPortFilter| if these steps return `true`:
 
       <ol>
+        <li>
+          If |filter|["{{SerialPortFilter/bluetoothServiceClassId}}"] is present:
+          <ol>
+            <li>If the USB device's Bluetooth Service Class ID is equal to
+            |filter|["{{SerialPortFilter/bluetoothServiceClassId}}"], return `true`
+            <li>Otherwise, return `false`.
         <li>
           If |filter|["{{SerialPortFilter/usbVendorId}}"] is not present, return
           `true`.
