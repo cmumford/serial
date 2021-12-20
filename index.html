@@ -6,10 +6,10 @@
 <link rel="stylesheet" href="styles/spec.css">
 <section id='abstract'>
 The <cite>Serial API</cite> provides a way for websites to read and write from a
-serial device through script. Such an API would bridge the web and the physical
-world, by allowing documents to communicate with devices such as
-microcontrollers, 3D printers, and other serial devices.
-  
+[=serial port=] through script. Such an API would bridge the web and the
+physical world, by allowing documents to communicate with devices such as
+microcontrollers, 3D printers, Bluetooth serial ports, and other serial devices.
+
 There is also a companion <a
 href="https://github.com/WICG/serial/blob/main/EXPLAINER.md">explainer</a>
 document.
@@ -71,12 +71,12 @@ document.
 
     <aside class="example">
       When the user first visits a site it will not have permission to access
-      any serial devices. A site must first call {{Serial/requestPort()}}. This
+      any [=serial ports=]. A site must first call {{Serial/requestPort()}}. This
       call gives the browser the opportunity to prompt the user for which device
       the site should be allowed to control. If the site is designed to work
-      with a particular device which is always connected via USB or Bluetooth the
-      site can provide a filter restricting the devices the user can select to
-      only those that would be compatible. For example, a site which programs
+      with a particular device that is always connected via USB or Bluetooth the
+      site may provide a filter restricting the devices the user can select to
+      only those that would be compatible. For example, a site that programs
       Arduino-powered robots could specify a filter like the following to limit
       the set of selectable ports to only USB devices with Arduino's USB vendor ID,
 
@@ -88,15 +88,15 @@ document.
       If on the other hand the site expects to be used with a wide variety of
       devices or devices connected through a USB to serial converter it may
       specify no filter at all and rely on the user to select the appropriate
-      USB device,
+      port,
 
       <pre class="js">
         const port = await navigator.serial.requestPort();
       </pre>
 
       Asking the user to choose a port requires showing a prompt to the user and
-      so the site must have [=transient activation=] from something like the
-      user clicking a button.
+      therefore the site must have [=transient activation=] from something like
+      the user clicking a button.
 
       <pre class="html">
         &lt;button id="connect">Connect&lt;/button>
@@ -158,17 +158,18 @@ document.
               <div class="note">
                 This check implements the combined rule that a
                 {{SerialPortFilter}} may only select a USB or Bluetooth
-                device.
+                port.
               </div>
         </ol>
       <li>Run the following steps [=in parallel=]:
         <ol>
           <li>
-            Prompt the user to grant the site access to a serial port by
+            Prompt the user to grant the site access to a [=serial port=] by
             presenting them with a list of available ports that [=match any
             filter=] in |options|["{{SerialPortRequestOptions/filters}}"] if
-            present and all available traditional serial ports otherwise.
-            Bluetooth ports are omitted unless explicitly matched by a filter.
+            present and all available [=traditional serial ports=] otherwise.
+            [=Bluetooth ports=] are omitted unless explicitly matched by a
+            filter.
           <li>
             If the user does not choose a port, [=queue a global task=] on the
             [=relevant global object=] of [=this=] using the [=serial port task
@@ -228,14 +229,13 @@ document.
         <li>
           If |filter|["{{SerialPortFilter/bluetoothServiceClassId}}"] is present:
           <ol>
-            <li>If the USB device's Bluetooth Service Class ID is equal to
+            <li>If the port's Bluetooth Service Class ID is equal to
             |filter|["{{SerialPortFilter/bluetoothServiceClassId}}"], return `true`
             <li>Otherwise, return `false`.
-          </ol>
         <li>
           If |filter|["{{SerialPortFilter/usbVendorId}}"] is not present, return
           `true`.
-        <li>If the serial port is not part of a USB device, return `false`.
+        <li>If the serial port is not a [=usb serial port=], return `false`.
         <li>
           If the USB device's vendor ID is not equal to
           |filter|["{{SerialPortFilter/usbVendorId}}"], return `false`.
@@ -446,7 +446,7 @@ document.
 
   <ol>
     <li>Let |info:SerialPortInfo| be a [=new=] {{SerialPortInfo}} dictionary.
-    <li>If the port is port of a USB device, perform the following steps:
+    <li>If the port is a [=usb serial port=], perform the following steps:
       <ol>
         <li>
           Set |info|["{{SerialPortInfo/usbVendorId}}"] to the vendor ID of the
@@ -455,12 +455,12 @@ document.
           Set |info|["{{SerialPortInfo/usbProductId}}"] to the product ID of the
           device.
       </ol>
-      <li>If the port is port of a Bluetooth device, perform the following steps:
-        <ol>
-          <li>
-            Set |info|["{{SerialPortInfo/bluetoothServiceClassId}}"] to the
-            Bluetooth service class ID of the device.
-        </ol>
+    <li>If the port is a [=Bluetooth port=], perform the following steps:
+      <ol>
+        <li>
+          Set |info|["{{SerialPortInfo/bluetoothServiceClassId}}"] to the
+          Bluetooth service class ID of the device.
+      </ol>
     <li>Return |info|.
   </ol>
 
@@ -478,17 +478,17 @@ document.
     <dl>
       <dt><dfn>usbVendorId</dfn> member
       <dd>
-        If the port is part of a USB device this member will be the 16-bit vendor
-        ID of that device. Otherwise it will be `undefined`.
+        If the port is a [=usb serial port=] this member will be the 16-bit
+        vendor ID of that device. Otherwise it will be `undefined`.
       <dt><dfn>usbProductId</dfn> member
       <dd>
-        If the port is part of a USB device this member will be the 16-bit product
-        ID of that device. Otherwise it will be `undefined`.
+        If the port is a [=usb serial port=] this member will be the 16-bit
+        product ID of that device. Otherwise it will be `undefined`.
       <dt><dfn>bluetoothServiceClassId</dfn> member
         <dd>
-          If the port is part of a Bluetooth device this member will be the
-          canonical UUID service class ID of that device. Otherwise it will be
-          `undefined`.
+          If the port is a [=Bluetooth port=] this member will be the
+          canonical 128-bit UUID service class ID of that port. Otherwise it
+          will be `undefined`.
     </dl>
   </section>
 
@@ -1482,10 +1482,10 @@ document.
 <section id="privacy" class="informative">
   <h2>Privacy considerations</h2>
 
-  Serial ports and serial devices contain two kinds of sensitive information.
+  Serial ports and [=serial devices=] contain two kinds of sensitive information.
   When a port is a USB or Bluetooth device there are identifiers such as the
-  vendor and product IDs (which identify the make and model) as well as a serial
-  number or MAC address. The serial device itself may also have its own
+  vendor and product IDs (which identify the make and model) as well as a
+  Bluetooth service class ID. The serial device itself may also have its own
   identifier that is available through commands sent via the serial port. The
   device may also store other private information which may or may not be
   identifying.
@@ -1530,6 +1530,48 @@ document.
   isolation boundaries in the web security model. Security UI and documentation
   should explain that granting a site access to a device could give the site
   full control over the device and any data contained within.
+</section>
+
+<section id="terms" class="informative">
+  <h2>Definition of Terms</h2>
+
+  <p>
+  Things to clarify?
+  <ol>
+    <li>Ports vs. devices</li>
+    <li>Traditional vs non-traditional Bluetooth ports</li>
+    <li>Don't think UART is correct. Is there a better way to define a serial
+      port?
+    </li>
+    <li>Bluetooth ports can be a USB device, but have no vendor/product ID.
+      Review text in this doc to refer to a specific class of port from the
+      definitions
+    </li>
+  </ol>
+
+  Definition list temporarily here.
+  <dl>
+    <dt><dfn>serial device</dfn>
+    <dd>A piece of hardware containing one or more serial ports.
+    <dt><dfn>serial port</dfn>
+    <dd>A communications interface where data is transferred in or out serially.
+      In this document often abbreviated to simply "port".
+    <dt><dfn>serial node</dfn>
+    <dd>The operating system mechanism where serial ports are commonly
+      registered by the operating system for access by applications. Examples
+      are COM ports, or device files (/dev/tty0).
+    <dt><dfn>traditional serial port</dfn>
+    <dd>A [=serial port=] mapped to a [=serial node=].
+    <dt><dfn>usb serial port</dfn>
+    <dd>A [=traditional serial port=] implemented with a UART by a USB device.
+      These devices have a USB vendor and product ID.
+    <dt><dfn>non-usb serial port</dfn>
+    <dd>A [=traditional serial port=] providing a UART implemented by a device
+      that is not on the USB.
+    <dt><dfn>Bluetooth port</dfn>
+    <dd>A non-traditional serial port implemented using a Bluetooth "classic"
+      device providing a RFCOMM service.
+  </dl>
 </section>
 
 <section id="conformance"></section>
